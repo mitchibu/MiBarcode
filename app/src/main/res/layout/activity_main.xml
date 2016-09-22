@@ -1,0 +1,14 @@
+<FrameLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent">
+	<TextureView
+		android:id="@+id/preview"
+		android:keepScreenOn="true"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"/>
+	<jp.gr.java_conf.mitchibu.mibarcode.BarcodeOverlayView
+		android:id="@+id/overlay"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"/>
+</FrameLayout>
