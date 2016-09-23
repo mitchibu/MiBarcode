@@ -174,13 +174,13 @@ public class MainActivity extends AppCompatActivity implements TextureView.Surfa
 	private void adjustPreview() {
 		if(reader == null) return;
 
-		final int rotation = getActivity().getWindowManager().getDefaultDisplay().getRotation();
+		final int rotation = getWindowManager().getDefaultDisplay().getRotation();
 		final float w = reader.getWidth();
 		final float h = reader.getHeight();
 		final float width = preview.getWidth();
 		final float height = preview.getHeight();
-		final int centerX = width / 2;
-		final int centerY = height / 2;
+		final float centerX = width / 2;
+		final float centerY = height / 2;
 		final float scale = Math.max(width / h, height / w);
 		float scaleX = h / width * scale;
 		float scaleY = w / height * scale;
