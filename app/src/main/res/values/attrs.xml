@@ -1,0 +1,8 @@
+<resources>
+	<declare-styleable name="BarcodeOverlayView">
+		<attr name="pointColor" format="color|reference"/>
+		<attr name="textSize" format="dimension|reference"/>
+		<attr name="textColor" format="color|reference"/>
+		<attr name="textBgColor" format="color|reference"/>
+	</declare-styleable>
+</resources>

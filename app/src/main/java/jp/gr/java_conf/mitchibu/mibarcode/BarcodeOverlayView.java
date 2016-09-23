@@ -32,15 +32,40 @@ public class BarcodeOverlayView extends View {
 
 	public BarcodeOverlayView(Context context, AttributeSet attrs) {
 		super(context, attrs);
-		paint.setColor(Color.YELLOW);
-		paint.setStyle(Paint.Style.FILL);
 
-		textPaint.setColor(Color.BLUE);
-		textPaint.setTextSize(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, MY_DIP_VALUE, getResources().getDisplayMetrics()));
+		int[] attrSet = {
+				R.attr.pointColor,
+				R.attr.textSize,
+				R.attr.textColor,
+				R.attr.textBgColor,
+		};
+		Arrays.sort(attrSet);
 
-		textBgPaint.setColor(Color.BLACK);
-		textBgPaint.setAlpha(128);
-		textBgPaint.setStyle(Paint.Style.FILL);
+		TypedArray a = null;
+		try {
+			a = context.obtainStyledAttributes(attrs, R.styleable.BarcodeOverlayView);
+
+			paint.setColor(a.getColor(Arrays.binarySearch(attrSet, R.attr.pointColor), Color.YELLOW));
+			paint.setStyle(Paint.Style.FILL);
+
+			textPaint.setColor(a.getColor(Arrays.binarySearch(attrSet, R.attr.textColor), Color.BLUE));
+			textPaint.setTextSize(a.getDimension(Arrays.binarySearch(attrSet, R.attr.textSize), MY_DIP_VALUE)));
+
+			textBgPaint.setColor(a.getColor(Arrays.binarySearch(attrSet, R.attr.textBgColor), Color.argb(128, 255, 255, 255)));
+			textBgPaint.setStyle(Paint.Style.FILL);
+		} finally {
+			if(a != null) a.recycle();
+		}
+
+//		paint.setColor(Color.YELLOW);
+//		paint.setStyle(Paint.Style.FILL);
+//
+//		textPaint.setColor(Color.BLUE);
+//		textPaint.setTextSize(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, MY_DIP_VALUE, getResources().getDisplayMetrics()));
+//
+//		textBgPaint.setColor(Color.BLACK);
+//		textBgPaint.setAlpha(128);
+//		textBgPaint.setStyle(Paint.Style.FILL);
 	}
 
 	public void update(Detector.Detections<Barcode> detections) {
