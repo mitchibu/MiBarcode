@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.pm.PackageManager;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
+import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.params.StreamConfigurationMap;
@@ -172,22 +173,23 @@ public class MainActivity extends AppCompatActivity implements TextureView.Surfa
 	}
 
 	private void adjustPreview() {
-		if(reader == null) return;
-
-		final int rotation = getWindowManager().getDefaultDisplay().getRotation();
-		final float w = reader.getWidth();
-		final float h = reader.getHeight();
-		final float width = preview.getWidth();
-		final float height = preview.getHeight();
-		final float centerX = width / 2;
-		final float centerY = height / 2;
-		final float scale = Math.max(width / h, height / w);
-		float scaleX = h / width * scale;
-		float scaleY = w / height * scale;
-
+		int viewWidth = preview.getWidth();
+		int viewHeight = preview.getHeight();
+		int rotation = getWindowManager().getDefaultDisplay().getRotation();
 		Matrix matrix = new Matrix();
-		matrix.postScale(scaleX, scaleY, centerX, centerY);
-		matrix.postRotate((360 - rotation * 90) % 360, centerX, centerY);
+		RectF viewRect = new RectF(0, 0, viewWidth, viewHeight);
+		RectF bufferRect = new RectF(0, 0, reader.getHeight(), reader.getWidth());
+		float centerX = viewRect.centerX();
+		float centerY = viewRect.centerY();
+		if(Surface.ROTATION_90 == rotation || Surface.ROTATION_270 == rotation) {
+			bufferRect.offset(centerX - bufferRect.centerX(), centerY - bufferRect.centerY());
+			matrix.setRectToRect(viewRect, bufferRect, Matrix.ScaleToFit.FILL);
+			float scale = Math.max((float)viewHeight / reader.getHeight(), (float)viewWidth / reader.getWidth());
+			matrix.postScale(scale, scale, centerX, centerY);
+			matrix.postRotate(90 * (rotation - 2), centerX, centerY);
+		} else if(Surface.ROTATION_180 == rotation) {
+			matrix.postRotate(180, centerX, centerY);
+		}
 		preview.setTransform(matrix);
 	}
 

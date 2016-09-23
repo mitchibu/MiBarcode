@@ -1,6 +1,7 @@
 package jp.gr.java_conf.mitchibu.mibarcode;
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -17,9 +18,9 @@ import com.google.android.gms.vision.Detector;
 import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.barcode.Barcode;
 
-public class BarcodeOverlayView extends View {
-	private static final int MY_DIP_VALUE = 12; //5dp
+import java.util.Arrays;
 
+public class BarcodeOverlayView extends View {
 	private final SparseArray<Barcode> barcodeArray = new SparseArray<>();
 	private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
 	private final Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -45,27 +46,21 @@ public class BarcodeOverlayView extends View {
 		try {
 			a = context.obtainStyledAttributes(attrs, R.styleable.BarcodeOverlayView);
 
-			paint.setColor(a.getColor(Arrays.binarySearch(attrSet, R.attr.pointColor), Color.YELLOW));
+			int color = a.getColor(Arrays.binarySearch(attrSet, R.attr.pointColor), Color.YELLOW);
+			paint.setColor(color);
 			paint.setStyle(Paint.Style.FILL);
 
-			textPaint.setColor(a.getColor(Arrays.binarySearch(attrSet, R.attr.textColor), Color.BLUE));
-			textPaint.setTextSize(a.getDimension(Arrays.binarySearch(attrSet, R.attr.textSize), MY_DIP_VALUE)));
+			color = a.getColor(Arrays.binarySearch(attrSet, R.attr.textColor), Color.BLUE);
+			textPaint.setColor(color);
+			int size = a.getDimensionPixelSize(Arrays.binarySearch(attrSet, R.attr.textSize), 20);
+			textPaint.setTextSize(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX, size, getResources().getDisplayMetrics()));
 
-			textBgPaint.setColor(a.getColor(Arrays.binarySearch(attrSet, R.attr.textBgColor), Color.argb(128, 255, 255, 255)));
+			color = a.getColor(Arrays.binarySearch(attrSet, R.attr.textBgColor), Color.argb(128, 0, 0, 0));
+			textBgPaint.setColor(color);
 			textBgPaint.setStyle(Paint.Style.FILL);
 		} finally {
 			if(a != null) a.recycle();
 		}
-
-//		paint.setColor(Color.YELLOW);
-//		paint.setStyle(Paint.Style.FILL);
-//
-//		textPaint.setColor(Color.BLUE);
-//		textPaint.setTextSize(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, MY_DIP_VALUE, getResources().getDisplayMetrics()));
-//
-//		textBgPaint.setColor(Color.BLACK);
-//		textBgPaint.setAlpha(128);
-//		textBgPaint.setStyle(Paint.Style.FILL);
 	}
 
 	public void update(Detector.Detections<Barcode> detections) {
@@ -92,12 +87,18 @@ public class BarcodeOverlayView extends View {
 		postInvalidate();
 	}
 
+	private float sx = 1.0f;
+	private float sy = 1.0f;
+	public void setScale(float sx, float sy) {
+		this.sx = sx;
+		this.sy = sy;
+	}
 	@Override
 	protected void onDraw(Canvas canvas) {
 		if(width == 0 || height == 0 || barcodeArray.size() == 0) return;
 
-		float sx = (float)canvas.getWidth() / width;
-		float sy = (float)canvas.getHeight() / height;
+		float sx = (float)canvas.getWidth() / width * this.sx;
+		float sy = (float)canvas.getHeight() / height * this.sy;
 		for(int i = 0, n = barcodeArray.size(); i < n; ++ i) {
 			Barcode barcode = barcodeArray.valueAt(i);
 

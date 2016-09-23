@@ -1,5 +1,6 @@
 <FrameLayout
 	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
 	android:layout_width="match_parent"
 	android:layout_height="match_parent">
 	<TextureView
@@ -8,6 +9,10 @@
 		android:layout_width="match_parent"
 		android:layout_height="match_parent"/>
 	<jp.gr.java_conf.mitchibu.mibarcode.BarcodeOverlayView
+		app:pointColor="@color/colorAccent"
+		app:textSize="12sp"
+		app:textColor="@android:color/holo_blue_light"
+		app:textBgColor="#80000000"
 		android:id="@+id/overlay"
 		android:layout_width="match_parent"
 		android:layout_height="match_parent"/>
