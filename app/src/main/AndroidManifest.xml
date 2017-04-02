@@ -19,7 +19,7 @@
 			android:name="com.google.android.gms.vision.DEPENDENCIES"
 			android:value="barcode"/>
 		<activity
-			android:name=".MainActivity"
+			android:name=".MainActivity2"
 			android:configChanges="fontScale|keyboardHidden|orientation|screenSize">
 			<intent-filter>
 				<action android:name="android.intent.action.MAIN"/>

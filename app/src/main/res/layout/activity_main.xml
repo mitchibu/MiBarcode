@@ -3,6 +3,22 @@
 	xmlns:app="http://schemas.android.com/apk/res-auto"
 	android:layout_width="match_parent"
 	android:layout_height="match_parent">
+	<RelativeLayout
+		android:layout_width="match_parent"
+		android:layout_height="match_parent">
+		<ProgressBar
+			style="?android:progressBarStyle"
+			android:id="@android:id/progress"
+			android:layout_centerInParent="true"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"/>
+		<TextView
+			android:text="@string/indicator"
+			android:layout_centerHorizontal="true"
+			android:layout_below="@android:id/progress"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"/>
+	</RelativeLayout>
 	<TextureView
 		android:id="@+id/preview"
 		android:keepScreenOn="true"

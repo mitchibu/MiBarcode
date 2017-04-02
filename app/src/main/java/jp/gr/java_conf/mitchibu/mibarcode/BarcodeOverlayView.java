@@ -12,6 +12,8 @@ import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.SparseArray;
 import android.util.TypedValue;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
 import android.view.View;
 
 import com.google.android.gms.vision.Detector;
@@ -27,9 +29,12 @@ public class BarcodeOverlayView extends View {
 	private final Paint textBgPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 	private final Path path = new Path();
 	private final RectF bounds = new RectF();
+	private final GestureDetector detector;
 
 	private int width = 0;
 	private int height = 0;
+
+	private OnItemClickListener onItemClickListener = null;
 
 	public BarcodeOverlayView(Context context, AttributeSet attrs) {
 		super(context, attrs);
@@ -61,9 +66,26 @@ public class BarcodeOverlayView extends View {
 		} finally {
 			if(a != null) a.recycle();
 		}
+
+		detector = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
+			@Override
+			public boolean onDown(MotionEvent e) {
+				return true;
+			}
+
+			@Override
+			public boolean onSingleTapUp(MotionEvent e) {
+				handleTap(e);
+				return true;
+			}
+		});
 	}
 
-	public void update(Detector.Detections<Barcode> detections) {
+	public void setOnItemClickListener(OnItemClickListener listener) {
+		onItemClickListener = listener;
+	}
+
+	public synchronized void update(Detector.Detections<Barcode> detections) {
 		Frame.Metadata metadata = detections.getFrameMetadata();
 		width = metadata.getWidth();
 		height = metadata.getHeight();
@@ -75,7 +97,7 @@ public class BarcodeOverlayView extends View {
 		postInvalidate();
 	}
 
-	public void reset(Detector.Detections<Barcode> detections) {
+	public synchronized void reset(Detector.Detections<Barcode> detections) {
 		if(detections == null) {
 			barcodeArray.clear();
 		} else {
@@ -87,18 +109,18 @@ public class BarcodeOverlayView extends View {
 		postInvalidate();
 	}
 
-	private float sx = 1.0f;
-	private float sy = 1.0f;
-	public void setScale(float sx, float sy) {
-		this.sx = sx;
-		this.sy = sy;
-	}
 	@Override
-	protected void onDraw(Canvas canvas) {
+	public boolean onTouchEvent(MotionEvent event) {
+		boolean rc = detector.onTouchEvent(event);
+		return rc || super.onTouchEvent(event);
+	}
+
+	@Override
+	protected synchronized void onDraw(Canvas canvas) {
 		if(width == 0 || height == 0 || barcodeArray.size() == 0) return;
 
-		float sx = (float)canvas.getWidth() / width * this.sx;
-		float sy = (float)canvas.getHeight() / height * this.sy;
+		float sx = (float)canvas.getWidth() / width;
+		float sy = (float)canvas.getHeight() / height;
 		for(int i = 0, n = barcodeArray.size(); i < n; ++ i) {
 			Barcode barcode = barcodeArray.valueAt(i);
 
@@ -129,5 +151,29 @@ public class BarcodeOverlayView extends View {
 	private void drawText(Canvas canvas, String text, Paint.FontMetricsInt font, float left, float top, float right, float bottom) {
 		canvas.drawRoundRect(left - 5, top - 5, right + 5, bottom + 5, 4, 4, textBgPaint);
 		canvas.drawText(text, left, (bottom + top) / 2 - (font.ascent + font.descent) / 2, textPaint);
+	}
+
+	private synchronized void handleTap(MotionEvent event) {
+		if(onItemClickListener == null) return;
+
+		float sx = (float)getWidth() / width;
+		float sy = (float)getHeight() / height;
+		for(int i = 0, n = barcodeArray.size(); i < n; ++ i) {
+			Barcode barcode = barcodeArray.valueAt(i);
+
+			path.reset();
+			for(Point point : barcode.cornerPoints) {
+				path.addCircle(point.x, point.y, 5, Path.Direction.CCW);
+			}
+			path.computeBounds(bounds, true);
+
+			if(bounds.contains(event.getX() / sx, event.getY() / sy)) {
+				onItemClickListener.onItemClick(this, barcodeArray.keyAt(i), barcode);
+			}
+		}
+	}
+
+	public interface OnItemClickListener {
+		void onItemClick(View view, int id, Barcode barcode);
 	}
 }

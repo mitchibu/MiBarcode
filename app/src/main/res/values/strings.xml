@@ -1,3 +1,4 @@
 <resources>
 	<string name="app_name">MiBarcode</string>
+	<string name="indicator">Processing&#8230;</string>
 </resources>

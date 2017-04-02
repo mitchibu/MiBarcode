@@ -4,6 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/MiBarcode.iml" filepath="$PROJECT_DIR$/MiBarcode.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/glengine/glengine.iml" filepath="$PROJECT_DIR$/glengine/glengine.iml" />
     </modules>
   </component>
 </project>

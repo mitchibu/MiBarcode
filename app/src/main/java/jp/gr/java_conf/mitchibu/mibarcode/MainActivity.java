@@ -1,6 +1,8 @@
 package jp.gr.java_conf.mitchibu.mibarcode;
 
 import android.Manifest;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
@@ -10,11 +12,13 @@ import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.v4.app.ActivityCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Pair;
 import android.util.Size;
@@ -51,6 +55,32 @@ public class MainActivity extends AppCompatActivity implements TextureView.Surfa
 		setContentView(R.layout.activity_main);
 
 		overlay = (BarcodeOverlayView)findViewById(R.id.overlay);
+		overlay.setOnItemClickListener(new BarcodeOverlayView.OnItemClickListener() {
+			@Override
+			public void onItemClick(View view, int id, Barcode barcode) {
+				final Uri uri = Uri.parse(barcode.rawValue);
+				String scheme = uri.getScheme();
+
+				AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+				builder.setTitle(R.string.app_name);
+				builder.setMessage(barcode.rawValue);
+				if(scheme != null) {
+					builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							try {
+								startActivity(new Intent(Intent.ACTION_VIEW, uri));
+							} catch(Exception e) {
+								e.printStackTrace();
+							}
+						}
+					});
+				}
+				builder.setNegativeButton(android.R.string.cancel, null);
+				builder.show();
+			}
+		});
+
 		preview = (TextureView)findViewById(R.id.preview);
 		preview.setSurfaceTextureListener(this);
 
@@ -59,7 +89,7 @@ public class MainActivity extends AppCompatActivity implements TextureView.Surfa
 		handler = new Handler(thread.getLooper());
 		helper = new Camera2Helper(this, handler);
 
-		detector = new BarcodeDetector.Builder(this).setBarcodeFormats(Barcode.QR_CODE).build();
+		detector = new BarcodeDetector.Builder(this).setBarcodeFormats(Barcode.ALL_FORMATS).build();
 		BarcodeProcessorFactory factory = new BarcodeProcessorFactory();
 		detector.setProcessor(new MultiProcessor.Builder<>(factory).build());
 	}
@@ -131,24 +161,7 @@ public class MainActivity extends AppCompatActivity implements TextureView.Surfa
 			image = reader.acquireLatestImage();
 			if(image == null) return;
 
-			int degrees;
-			switch(getWindowManager().getDefaultDisplay().getRotation()) {
-			case Surface.ROTATION_0:
-				degrees = 0;
-				break;
-			case Surface.ROTATION_90:
-				degrees = 90;
-				break;
-			case Surface.ROTATION_180:
-				degrees = 180;
-				break;
-			case Surface.ROTATION_270:
-				degrees = 270;
-				break;
-			default:
-				throw new UnsupportedOperationException();
-			}
-
+			int degrees = getWindowManager().getDefaultDisplay().getRotation() * 90;
 			int angle;
 //			if(cameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
 //				angle = (cameraInfo.orientation + degrees) % 360;
@@ -207,7 +220,6 @@ public class MainActivity extends AppCompatActivity implements TextureView.Surfa
 			// TODO
 			finish();
 		} else {
-			// TODO プレビューサイズ ＆ TextureView.setTransform
 			int width = preview.getWidth();
 			int height = preview.getHeight();
 			Size[] sizes = result.second.getOutputSizes(SurfaceTexture.class);
