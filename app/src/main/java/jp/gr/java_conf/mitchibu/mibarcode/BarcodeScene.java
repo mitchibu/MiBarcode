@@ -1,9 +1,7 @@
 package jp.gr.java_conf.mitchibu.mibarcode;
 
-import android.app.Activity;
-import android.hardware.Camera;
+import android.graphics.SurfaceTexture;
 import android.opengl.GLES20;
-import android.view.Surface;
 
 import jp.gr.java_conf.mitchibu.glengine.GLEngine;
 
@@ -11,73 +9,40 @@ import jp.gr.java_conf.mitchibu.glengine.GLEngine;
 public class BarcodeScene extends GLEngine.Scene {
 	private final PreviewLayer previewLayer = new PreviewLayer();
 	private final OverlayLayer overlayLayer = new OverlayLayer();
-	private final Activity activity;
-	private final Camera camera;
+	private final Callback callback;
 
-	public BarcodeScene(Activity activity, Camera camera) {
-		this.activity = activity;
-		this.camera = camera;
+	public BarcodeScene(Callback callback) {
+		this.callback = callback;
 
-		if(camera != null) addLayer(previewLayer);
+		addLayer(previewLayer);
 		addLayer(overlayLayer);
-		addLayer(new OverlayLayer2());
+	}
+
+	public void setViewport(int x, int y, int width, int height) {
+		GLES20.glViewport(x, y, width, height);
+	}
+
+	public void setRotate(int rotate) {
+		previewLayer.setRotate(rotate);
+	}
+
+	public void setContentSize(int width, int height) {
+		previewLayer.setContentSize(width, height);
 	}
 
 	@Override
 	protected void onPostInitialize(GLEngine engine) {
-		if(camera == null) return;
-		try {
-			camera.setPreviewTexture(previewLayer.getSurfaceTexture());
-			Camera.Parameters params = camera.getParameters();
-			Camera.Size size = params.getPreferredPreviewSizeForVideo();
-			params.setPreviewSize(size.width, size.height);
-			camera.setParameters(params);
-			camera.startPreview();
-		} catch(Exception e) {
-			e.printStackTrace();
-		}
+		if(callback != null) callback.onInitialized(previewLayer.getSurfaceTexture());
 	}
 
 	@SuppressWarnings("SuspiciousNameCombination")
 	@Override
 	protected void onPreConfigure(GLEngine engine) {
-		if(camera == null) return;
-		Camera.Parameters params = camera.getParameters();
-		Camera.Size size = getContentSize();
-		params.setPreviewSize(size.width, size.height);
-		camera.setParameters(params);
-		camera.startPreview();
-
-		int contentWidth;
-		int contentHeight;
-		int rotate = activity.getWindowManager().getDefaultDisplay().getRotation();
-		switch(rotate) {
-		case Surface.ROTATION_0:
-			contentWidth = size.height;
-			contentHeight = size.width;
-			break;
-		case Surface.ROTATION_90:
-			contentWidth = size.width;
-			contentHeight = size.height;
-			break;
-		case Surface.ROTATION_180:
-			contentWidth = size.height;
-			contentHeight = size.width;
-			break;
-		case Surface.ROTATION_270:
-			contentWidth = size.width;
-			contentHeight = size.height;
-			break;
-		default:
-			throw new RuntimeException();
-		}
-//		GLES20.glViewport((engine.getWidth() - contentWidth) / 2, (engine.getHeight() - contentHeight) / 2, contentWidth, contentHeight);
-		previewLayer.setRotate(rotate);
+		if(callback != null) callback.onConfigured(engine.getWidth(), engine.getHeight());
 	}
 
-	private Camera.Size getContentSize() {
-		Camera.Parameters params = camera.getParameters();
-//		List<Camera.Size> sizes = params.getSupportedPreviewSizes();
-		return params.getPreferredPreviewSizeForVideo();
+	public interface Callback {
+		void onInitialized(SurfaceTexture surfaceTexture);
+		void onConfigured(int width, int height);
 	}
 }

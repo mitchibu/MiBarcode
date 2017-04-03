@@ -13,6 +13,7 @@ public class OverlayLayer extends GLEngine.Layer {
 			"attribute vec2 vPosition;\n" +
 					"void main() {\n" +
 					"  gl_Position = vec4( vPosition.x, vPosition.y, 0.0, 1.0 );\n" +
+					"   gl_PointSize = 100.0;" +
 					"}";
 
 	private static final String fss =
@@ -27,8 +28,8 @@ public class OverlayLayer extends GLEngine.Layer {
 
 	@Override
 	protected void onInitialize(GLEngine engine) {
-		int vertexShader = loadShader(GLES20.GL_VERTEX_SHADER, vss);
-		int fragmentShader = loadShader(GLES20.GL_FRAGMENT_SHADER, fss);
+		int vertexShader = GLEngine.loadShader(GLES20.GL_VERTEX_SHADER, vss);
+		int fragmentShader = GLEngine.loadShader(GLES20.GL_FRAGMENT_SHADER, fss);
 		program = GLES20.glCreateProgram();
 		GLES20.glAttachShader(program, vertexShader);
 		GLES20.glAttachShader(program, fragmentShader);
@@ -44,34 +45,15 @@ public class OverlayLayer extends GLEngine.Layer {
 	@Override
 	protected void onDraw(GLEngine engine) {
 		GLES20.glUseProgram(program);
-		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 
 		int ph = GLES20.glGetAttribLocation(program, "vPosition");
 		GLES20.glEnableVertexAttribArray(ph);
 
 		GLES20.glVertexAttribPointer(ph, DIMENSION, GLES20.GL_FLOAT, false, 0, fb);
-		GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, COUNT);
+//		GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, COUNT);
+		GLES20.glDrawArrays(GLES20.GL_POINTS, 0, COUNT);
 
 		GLES20.glDisableVertexAttribArray(ph);
 		GLES20.glUseProgram(0);
-	}
-
-	@Override
-	protected void onConfigure(GLEngine engine) {
-//		GLES20.glViewport(0, 0, engine.getWidth(), engine.getHeight());
-	}
-
-	private static int loadShader(int mode, String code) {
-		int shader = GLES20.glCreateShader(mode);
-		GLES20.glShaderSource(shader, code);
-		GLES20.glCompileShader(shader);
-		int[] compiled = new int[1];
-		GLES20.glGetShaderiv(shader, GLES20.GL_COMPILE_STATUS, compiled, 0);
-		if(compiled[0] == 0) {
-			android.util.Log.e("Shader", "Could not compile shader:" + GLES20.glGetShaderInfoLog(shader));
-			GLES20.glDeleteShader(shader);
-			shader = 0;
-		}
-		return shader;
 	}
 }

@@ -1,8 +1,10 @@
 package jp.gr.java_conf.mitchibu.glengine;
 
+import android.content.Context;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,6 +13,39 @@ import javax.microedition.khronos.opengles.GL10;
 
 @SuppressWarnings({"WeakerAccess", "unused"})
 public class GLEngine implements GLSurfaceView.Renderer {
+	public static int loadShader(Context context, int mode, int rawID) {
+		InputStream in = null;
+		try {
+			in = context.getResources().openRawResource(rawID);
+			StringBuilder sb = new StringBuilder();
+			byte[] b = new byte[4096];
+			int n;
+			while((n = in.read(b)) > 0) sb.append(new String(b, 0, n));
+			return loadShader(mode, sb.toString());
+		} catch(Exception e) {
+			e.printStackTrace();
+			return 0;
+		} finally {
+			if(in != null) try { in.close(); } catch(Exception e) { e.printStackTrace(); }
+		}
+	}
+
+	public static int loadShader(int mode, String code) {
+		int shader = GLES20.glCreateShader(mode);
+		GLES20.glShaderSource(shader, code);
+		GLES20.glCompileShader(shader);
+		int[] compiled = new int[1];
+		GLES20.glGetShaderiv(shader, GLES20.GL_COMPILE_STATUS, compiled, 0);
+		if(compiled[0] == 0) {
+			android.util.Log.e(GLEngine.class.getSimpleName(), "Could not compile shader:" + GLES20.glGetShaderInfoLog(shader));
+			GLES20.glDeleteShader(shader);
+			shader = 0;
+		}
+		return shader;
+	}
+
+	private final Object lock = new Object();
+
 	private Scene scene = null;
 	private Scene nextScene = null;
 	private boolean isSurfaceChanged = true;
@@ -18,16 +53,22 @@ public class GLEngine implements GLSurfaceView.Renderer {
 	private int height = 0;
 
 	public int getWidth() {
-		return width;
+		synchronized(lock) {
+			return width;
+		}
 	}
 
 	public int getHeight() {
-		return height;
+		synchronized(lock) {
+			return height;
+		}
 	}
 
 	public void setScene(final Scene newScene) {
-		if(scene == newScene) return;
-		nextScene = newScene;
+		synchronized(lock) {
+			if(scene == newScene) return;
+			nextScene = newScene;
+		}
 	}
 
 	@Override
@@ -38,29 +79,33 @@ public class GLEngine implements GLSurfaceView.Renderer {
 	@Override
 	public void onSurfaceChanged(GL10 ignore, int width, int height) {
 		isSurfaceChanged = true;
-		this.width = width;
-		this.height = height;
+		synchronized(lock) {
+			this.width = width;
+			this.height = height;
+		}
 	}
 
 	@Override
 	public void onDrawFrame(GL10 ignore) {
 		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
-		boolean changeScene = nextScene != null;
-		if(changeScene) {
-			if(scene != null) scene.release(this);
-			nextScene.initialize(this);
-			scene = nextScene;
-			nextScene = null;
+		boolean changeScene;
+		synchronized(lock) {
+			changeScene = nextScene != null;
+			if(changeScene) {
+				if(scene != null) scene.release(this);
+				nextScene.initialize(this);
+				scene = nextScene;
+				nextScene = null;
+			}
+			if(scene == null) return;
 		}
 
-		if(scene != null) {
-			if(changeScene || isSurfaceChanged) {
-				scene.configure(this);
-				isSurfaceChanged = false;
-			}
-			scene.draw(this);
+		if(changeScene || isSurfaceChanged) {
+			scene.configure(this);
+			isSurfaceChanged = false;
 		}
+		scene.draw(this);
 	}
 
 	public static class Scene {
