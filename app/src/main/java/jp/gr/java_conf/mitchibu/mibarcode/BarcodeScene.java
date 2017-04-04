@@ -3,6 +3,9 @@ package jp.gr.java_conf.mitchibu.mibarcode;
 import android.graphics.SurfaceTexture;
 import android.opengl.GLES20;
 
+import com.google.android.gms.vision.Detector;
+import com.google.android.gms.vision.barcode.Barcode;
+
 import jp.gr.java_conf.mitchibu.glengine.GLEngine;
 
 @SuppressWarnings({"deprecation", "WeakerAccess"})
@@ -30,7 +33,15 @@ public class BarcodeScene extends GLEngine.Scene {
 		previewLayer.setContentSize(width, height);
 	}
 
-	@Override
+	public synchronized void update(Detector.Detections<Barcode> detections) {
+		overlayLayer.update(detections);
+	}
+
+	public synchronized void reset(Detector.Detections<Barcode> detections) {
+		overlayLayer.reset(detections);
+	}
+
+		@Override
 	protected void onPostInitialize(GLEngine engine) {
 		if(callback != null) callback.onInitialized(previewLayer.getSurfaceTexture());
 	}

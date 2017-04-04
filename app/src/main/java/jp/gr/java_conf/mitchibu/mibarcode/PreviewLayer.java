@@ -61,7 +61,7 @@ public class PreviewLayer extends GLEngine.Layer implements SurfaceTexture.OnFra
 
 	@Override
 	protected void onInitialize(GLEngine engine) {
-//		mFramebufferObject = new GLES20FramebufferObject();
+		mFramebufferObject = new GLES20FramebufferObject();
 		mShader = new GLES20Shader();
 		mShader.setup();
 
@@ -128,8 +128,11 @@ public class PreviewLayer extends GLEngine.Layer implements SurfaceTexture.OnFra
 	int[] renderBuffer = new int[1];
 	@Override
 	protected void onConfigure(GLEngine engine) {
-		int width = engine.getWidth();
-		int height = engine.getHeight();
+		int width = this.width;//engine.getWidth();
+		int height = this.height;//engine.getHeight();
+//		float scale = Math.min((float)engine.getWidth() / this.width, (float)engine.getHeight() / this.height);
+//		int width = (int)((float)this.width * scale);
+//		int height = (int)((float)this.height * scale);
 		if(mFramebufferObject != null) {
 			mFramebufferObject.setup(width, height);
 		} else {
@@ -166,6 +169,9 @@ public class PreviewLayer extends GLEngine.Layer implements SurfaceTexture.OnFra
 
 	@Override
 	protected void onDraw(GLEngine engine) {
+		GLES20.glViewport(0, 0, width, height);
+//		adjustViewport(engine.getWidth(), engine.getHeight());
+//		GLES20.glViewport(0, 0, engine.getWidth(), engine.getHeight());
 		if(mFramebufferObject != null) {
 			mFramebufferObject.enable();
 		} else {
@@ -197,6 +203,9 @@ public class PreviewLayer extends GLEngine.Layer implements SurfaceTexture.OnFra
 		GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, COUNT);
 
 		GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
+		adjustViewport(engine.getWidth(), engine.getHeight());
+//		GLES20.glViewport(0, 0, engine.getWidth(), engine.getHeight());
+//		GLES20.glViewport(0, 0, width, height);
 		if(mFramebufferObject != null) {
 			mShader.draw(mFramebufferObject.getTexName());
 		} else {
@@ -207,5 +216,13 @@ public class PreviewLayer extends GLEngine.Layer implements SurfaceTexture.OnFra
 	@Override
 	public void onFrameAvailable(SurfaceTexture surfaceTexture) {
 		isUpdateTexture = true;
+	}
+
+	private void adjustViewport(int width, int height) {
+		float scale = Math.min((float)width / this.width, (float)height / this.height);
+		int contentWidth = (int)((float)this.width * scale);
+		int contentHeight = (int)((float)this.height * scale);
+		GLES20.glViewport((width - contentWidth) / 2, (height - contentHeight) / 2, contentWidth, contentHeight);
+//		GLES20.glViewport(0, 0, contentWidth, contentHeight);
 	}
 }
