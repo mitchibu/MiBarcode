@@ -219,7 +219,7 @@ public class PreviewLayer extends GLEngine.Layer implements SurfaceTexture.OnFra
 	}
 
 	private void adjustViewport(int width, int height) {
-		float scale = Math.min((float)width / this.width, (float)height / this.height);
+		float scale = Math.max((float)width / this.width, (float)height / this.height);
 		int contentWidth = (int)((float)this.width * scale);
 		int contentHeight = (int)((float)this.height * scale);
 		GLES20.glViewport((width - contentWidth) / 2, (height - contentHeight) / 2, contentWidth, contentHeight);

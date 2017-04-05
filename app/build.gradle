@@ -24,4 +24,5 @@ dependencies {
     compile 'com.android.support:appcompat-v7:24.2.1'
     compile 'com.google.android.gms:play-services-vision:9.6.0'
     compile project(':glengine')
+    compile project(':cameracompat')
 }

@@ -20,7 +20,7 @@ public class OverlayLayer extends GLEngine.Layer {
 			"attribute vec2 vPosition;\n" +
 					"void main() {\n" +
 					"  gl_Position = vec4( vPosition.x, vPosition.y, 0.0, 1.0 );\n" +
-					"   gl_PointSize = 100.0;" +
+					"   gl_PointSize = 10.0;" +
 					"}";
 
 	private static final String fss =
@@ -84,18 +84,18 @@ public class OverlayLayer extends GLEngine.Layer {
 	protected void onDraw(GLEngine engine) {
 //		GLES20.glViewport((engine.getWidth()- width) / 2, (engine.getHeight() - height) / 2, width, height);
 //		GLES20.glViewport(0, 0, width, height);
-		GLES20.glViewport(0, 0, engine.getWidth(), engine.getHeight());
+//		GLES20.glViewport(0, 0, engine.getWidth(), engine.getHeight());
 		ArrayList<Float> array;
 		synchronized(barcodeArray) {
 			array = new ArrayList<>();
-			float sx = (float)engine.getWidth() / width;
-			float sy = (float)engine.getHeight() / height;
+//			float sx = (float)engine.getWidth() / width;
+//			float sy = (float)engine.getHeight() / height;
 			for(int i = 0, n = barcodeArray.size(); i < n; ++i) {
 				Barcode barcode = barcodeArray.valueAt(i);
 				for(Point point : barcode.cornerPoints) {
-					float x = (float)point.x * sx / width;
-					float y = (float)point.y * sy / height;
-					array.add(x - x / 2);
+					float x = 4.0f * ((float)point.x - (float)width / 2.0f) / width;
+					float y = 4.0f * ((float)point.y - (float)height / 2.0f) / height;
+					array.add((x - x / 2));
 					array.add(-(y - y / 2));
 				}
 			}

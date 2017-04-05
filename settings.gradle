@@ -1,1 +1,1 @@
-include ':app', ':glengine'
+include ':app', ':glengine', ':cameracompat'
