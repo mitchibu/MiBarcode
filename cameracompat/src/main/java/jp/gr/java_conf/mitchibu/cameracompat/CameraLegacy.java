@@ -18,6 +18,17 @@ class CameraLegacy extends CameraCompat {
 	}
 
 	@Override
+	public float getMaxZoom() {
+		return camera.getParameters().getMaxZoom();
+	}
+
+	@Override
+	public float setZoom(float zoom) {
+		camera.getParameters().setZoom((int)zoom);
+		return zoom;
+	}
+
+	@Override
 	public void startPreview(SurfaceHolder holder) throws Exception {
 		try {
 			configure();

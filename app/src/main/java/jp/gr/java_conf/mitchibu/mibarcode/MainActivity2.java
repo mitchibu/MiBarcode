@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Size;
+import android.view.KeyEvent;
 import android.view.Surface;
 import android.view.View;
 
@@ -93,6 +94,20 @@ public class MainActivity2 extends AppCompatActivity implements BarcodeScene.Cal
 			}
 			init();
 		}
+	}
+
+	float zoom = 1.0f;
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		switch(keyCode) {
+		case KeyEvent.KEYCODE_VOLUME_DOWN:
+			zoom = camera.setZoom(zoom - 0.1f);
+			return true;
+		case KeyEvent.KEYCODE_VOLUME_UP:
+			zoom = camera.setZoom(zoom + 0.1f);
+			return true;
+		}
+		return super.onKeyDown(keyCode, event);
 	}
 
 	Size size;

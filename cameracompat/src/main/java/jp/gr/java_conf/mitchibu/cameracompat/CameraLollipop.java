@@ -2,6 +2,7 @@ package jp.gr.java_conf.mitchibu.cameracompat;
 
 import android.content.Context;
 import android.graphics.ImageFormat;
+import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
@@ -61,6 +62,7 @@ class CameraLollipop extends CameraCompat implements ImageReader.OnImageAvailabl
 
 	private CameraDevice cameraDevice = null;
 	private CameraCaptureSession cameraSession = null;
+	private CaptureRequest.Builder requestBuilder = null;
 	private ImageReader reader = null;
 
 	CameraLollipop(Context context, Bundle params, Callback callback) {
@@ -70,6 +72,43 @@ class CameraLollipop extends CameraCompat implements ImageReader.OnImageAvailabl
 		thread = new HandlerThread(getClass().getSimpleName());
 		thread.start();
 		handler = new Handler(thread.getLooper());
+	}
+
+	@Override
+	public float getMaxZoom() {
+		try {
+			CameraCharacteristics c = cm.getCameraCharacteristics(cameraDevice.getId());
+			Float zoom = c.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM);
+			if(zoom != null) return zoom;
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+		return 1.0f;
+	}
+
+	@Override
+	public float setZoom(float zoom) {
+		try {
+			CameraCharacteristics c = cm.getCameraCharacteristics(cameraDevice.getId());
+			Float max = c.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM);
+			if(max == null) max = 1.0f;
+
+			Rect region = c.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
+			if(region != null) {
+				if(zoom < 1.0f) zoom = 1.0f;
+				if(zoom > max) zoom = max;
+				float width = (float)region.width() / zoom;
+				float height = (float)region.height() / zoom;
+				region.right = region.left + (int)width;
+				region.bottom = region.top + (int)height;
+				CaptureRequest.Builder builder = requestBuilder;
+				builder.set(CaptureRequest.SCALER_CROP_REGION, region);
+				cameraSession.setRepeatingRequest(builder.build(), null, handler);
+			}
+		} catch(CameraAccessException e) {
+			e.printStackTrace();
+		}
+		return zoom;
 	}
 
 	@Override
@@ -96,6 +135,7 @@ class CameraLollipop extends CameraCompat implements ImageReader.OnImageAvailabl
 
 	@Override
 	public void release() {
+		android.util.Log.v("test", "release");
 		if(cameraSession != null) {
 			try {
 				cameraSession.stopRepeating();
@@ -141,9 +181,9 @@ class CameraLollipop extends CameraCompat implements ImageReader.OnImageAvailabl
 	private Pair<String, StreamConfigurationMap> findCamera(int facing) {
 		try {
 			for(String id : cm.getCameraIdList()) {
-				CameraCharacteristics characteristics = cm.getCameraCharacteristics(id);
-				if(Integer.valueOf(facing).equals(characteristics.get(CameraCharacteristics.LENS_FACING))) {
-					return new Pair<>(id, characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP));
+				CameraCharacteristics c = cm.getCameraCharacteristics(id);
+				if(Integer.valueOf(facing).equals(c.get(CameraCharacteristics.LENS_FACING))) {
+					return new Pair<>(id, c.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP));
 				}
 			}
 		} catch(CameraAccessException e) {
@@ -168,12 +208,10 @@ class CameraLollipop extends CameraCompat implements ImageReader.OnImageAvailabl
 									public void onConfigured(CameraCaptureSession session) {
 										cameraSession = session;
 										try {
-											CaptureRequest.Builder builder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
-											if(isEnableAF())
-												builder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
-											for(Surface surface : surfaces)
-												builder.addTarget(surface);
-											session.setRepeatingRequest(builder.build(), null, handler);
+											requestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+											if(isEnableAF()) requestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
+											for(Surface surface : surfaces) requestBuilder.addTarget(surface);
+											session.setRepeatingRequest(requestBuilder.build(), null, handler);
 										} catch(CameraAccessException e) {
 											e.printStackTrace();
 											release();

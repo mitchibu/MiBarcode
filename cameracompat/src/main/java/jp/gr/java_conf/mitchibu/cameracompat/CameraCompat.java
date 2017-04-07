@@ -34,6 +34,8 @@ public abstract class CameraCompat {
 		return previewHeight;
 	}
 
+	public abstract float getMaxZoom();
+	public abstract float setZoom(float zoom);
 	public abstract void startPreview(SurfaceHolder holder) throws Exception;
 	public abstract void startPreview(SurfaceTexture texture) throws Exception;
 	public abstract void release();
